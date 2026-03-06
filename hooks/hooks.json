@@ -1,0 +1,63 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/hooks/run-hook.js\" \"pre:phase-gate\" \"scripts/hooks/pre-tool-use.js\" \"standard,strict\""
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/hooks/run-hook.js\" \"session:start\" \"scripts/hooks/session-start.js\" \"minimal,standard,strict\""
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/hooks/run-hook.js\" \"pre:compact\" \"scripts/hooks/pre-compact.js\" \"standard,strict\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/hooks/run-hook.js\" \"post:quality-gate\" \"scripts/hooks/quality-gate.js\" \"standard,strict\"",
+            "async": true,
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/hooks/run-hook.js\" \"stop:session-summary\" \"scripts/hooks/session-stop.js\" \"minimal,standard,strict\"",
+            "async": true,
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

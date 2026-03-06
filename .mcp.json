@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "websearch": {
+      "type": "http",
+      "url": "https://mcp.exa.ai/mcp?tools=web_search_exa"
+    },
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp"
+    },
+    "grep_app": {
+      "type": "http",
+      "url": "https://mcp.grep.app"
+    },
+    "oh-ccbb-example": {
+      "command": "node",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/mcp/example-server.js"
+      ],
+      "disabled": true
+    }
+  }
+}

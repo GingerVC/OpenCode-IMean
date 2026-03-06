@@ -1,0 +1,13 @@
+{
+  "name": "oh-imean",
+  "version": "0.1.0",
+  "description": "OpenCode iMean community workflow plugin scaffold for OpenCode and Claude-compatible loaders.",
+  "author": {
+    "name": "vcbb"
+  },
+  "commands": "${CLAUDE_PLUGIN_ROOT}/commands",
+  "agents": "${CLAUDE_PLUGIN_ROOT}/agents",
+  "skills": "${CLAUDE_PLUGIN_ROOT}/skills",
+  "hooks": "${CLAUDE_PLUGIN_ROOT}/hooks/hooks.json",
+  "mcpServers": "${CLAUDE_PLUGIN_ROOT}/.mcp.json"
+}
