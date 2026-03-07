@@ -89,7 +89,7 @@ function main() {
   }
 
   const phase = String(task.state.phase || '').trim();
-  if (phase === 'implement') {
+  if (phase === 'tdd' || phase === 'implement') {
     return allow();
   }
 
@@ -101,7 +101,7 @@ function main() {
   return block(
     `[oh-imean] Phase Gate Blocked: Cannot edit source file "${filePath}".\n\n` +
     `Reason: The current task "${task.taskSlug}" is actively in the "${phase || 'unknown'}" phase.\n` +
-    `Action Required: You are NOT allowed to write or edit source code during the planning or review phases.\n` +
+    `Action Required: You are NOT allowed to write or edit source code outside the "tdd" or "implement" phases.\n` +
     `Only ".oh-imean/" artifacts (like plan.md or review.md) can be modified right now.\n` +
     `Check ".oh-imean/specs/${task.taskSlug}/state.json" to understand your current role and phase.`
   );

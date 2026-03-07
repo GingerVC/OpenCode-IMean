@@ -25,6 +25,8 @@ test('session start renders structured resume output', () => {
     task_slug: 'demo-task',
     mode: 'standardized',
     phase: 'verify',
+    execution_lane: 'direct',
+    planning_depth: 'lite',
     status: 'active',
     selected_option: 'P2 - 平衡方案',
     active_step: '执行最终验证',
@@ -51,6 +53,8 @@ test('session start renders structured resume output', () => {
   assert.match(result.stdout, /## Context/);
   assert.match(result.stdout, /## Latest Session Summary/);
   assert.match(result.stdout, /- mode: standardized/);
+  assert.match(result.stdout, /- execution_lane: direct/);
+  assert.match(result.stdout, /- planning_depth: lite/);
   assert.match(result.stdout, /P2 - 平衡方案/);
   assert.match(result.stdout, /\/verify demo-task/);
 });

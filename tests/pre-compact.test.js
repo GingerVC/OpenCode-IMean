@@ -25,6 +25,8 @@ test('pre-compact snapshot keeps selected option and active step', () => {
     task_slug: 'demo-task',
     mode: 'standardized',
     phase: 'implement',
+    execution_lane: 'direct',
+    planning_depth: 'lite',
     status: 'active',
     selected_option: 'P1 - 稳妥最小改动',
     active_step: '更新登录前置校验',
@@ -47,6 +49,8 @@ test('pre-compact snapshot keeps selected option and active step', () => {
 
   const snapshot = JSON.parse(fs.readFileSync(path.join(logsDir, snapshotFile), 'utf8'));
   assert.equal(snapshot.mode, 'standardized');
+  assert.equal(snapshot.execution_lane, 'direct');
+  assert.equal(snapshot.planning_depth, 'lite');
   assert.equal(snapshot.selected_option, 'P1 - 稳妥最小改动');
   assert.equal(snapshot.active_step, '更新登录前置校验');
   assert.equal(snapshot.last_blocking_reason, '等待 reviewer 结论');

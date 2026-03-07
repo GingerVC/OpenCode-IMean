@@ -121,8 +121,20 @@ function buildPlanImplementation(options) {
 
 function buildPlanHandoff(options) {
   return {
-    phase: options.values.phase || 'implement',
+    phase: options.values.phase || 'tdd',
     from_role: options.values['from-role'] || 'spec-planner',
+    to_role: options.values['to-role'] || 'tdd-writer',
+    context: options.values.context || '',
+    assumptions: options.lists.assumption || [],
+    open_questions: options.lists['open-question'] || [],
+    next_action: options.values['next-action'] || `运行 /tdd ${options.taskSlug}`,
+  };
+}
+
+function buildTddHandoff(options) {
+  return {
+    phase: options.values.phase || 'implement',
+    from_role: options.values['from-role'] || 'tdd-writer',
     to_role: options.values['to-role'] || 'implementer',
     context: options.values.context || '',
     assumptions: options.lists.assumption || [],
@@ -170,6 +182,8 @@ function buildStatePatch(options) {
   return {
     mode: options.values.mode || undefined,
     phase: options.values.phase || undefined,
+    execution_lane: options.values['execution-lane'] || undefined,
+    planning_depth: options.values['planning-depth'] || undefined,
     status: options.values.status || undefined,
     current_goal: options.values.goal || undefined,
     current_role: options.values['current-role'] || undefined,
@@ -190,6 +204,8 @@ function buildStatePatch(options) {
 function buildRuntimePatch(options) {
   return {
     phase: options.values.phase || undefined,
+    execution_lane: options.values['execution-lane'] || undefined,
+    planning_depth: options.values['planning-depth'] || undefined,
     hook_profile: options.values['hook-profile'] || undefined,
     recommended_next_command: options.values['recommended-next-command'] || undefined,
     last_blocking_reason: options.values['last-blocking-reason'] || undefined,
@@ -220,6 +236,8 @@ function buildMeta(options) {
       return buildPlanImplementation(options);
     case 'plan-handoff':
       return buildPlanHandoff(options);
+    case 'tdd-handoff':
+      return buildTddHandoff(options);
     case 'kickoff-handoff':
       return buildKickoffHandoff(options);
     case 'verify-report':
@@ -228,12 +246,14 @@ function buildMeta(options) {
       return buildReviewReport(options);
     case 'dispatch-state':
     case 'plan-state':
+    case 'tdd-state':
     case 'kickoff-state':
     case 'review-state':
     case 'verify-state':
       return compactObject(buildStatePatch(options));
     case 'dispatch-runtime':
     case 'plan-runtime':
+    case 'tdd-runtime':
     case 'kickoff-runtime':
     case 'review-runtime':
     case 'verify-runtime':

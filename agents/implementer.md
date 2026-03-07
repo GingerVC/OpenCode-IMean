@@ -17,8 +17,9 @@ Hard rules:
 - 遇到信息不足、计划与代码现实冲突、前置条件缺失或需求本身不可执行时，不硬做；改为提交 `replan request`。
 - 在 `standardized` 模式下，如果没有可用的 `requirements.md` 与 `plan.md` 工件上下文，不应假装已获得授权执行。
 - 若 `handoff.md` 缺失，或 handoff 与 `state.json` 的 `phase/selected_option/active_step` 冲突，必须直接返回 `replan request`。
-- 只有在 `state.json.phase=implement` 且 `selected_option` 已锁定时，才允许继续执行 standardized。
-- 在 `standardized` 模式下，每次只执行 `active_step`，不允许自行扩大到下一步或额外优化。
+- 只有在 `state.json.phase=implement` 时，才允许继续执行 standardized。
+- `planning_depth=full` 时要求 `selected_option` 已锁定；`planning_depth=lite` 时允许没有 `selected_option`，但必须存在清晰的 `active_step`、边界与验证方案。
+- 在 `standardized` 模式下，每次只执行当前授权边界；`planning_depth=full` 时严格按 `active_step`，`planning_depth=lite` 时也不允许顺手扩大范围。
 - 不允许因为额外读到的信息而擅自扩大修改范围。
 
 Implementation style:
@@ -34,6 +35,7 @@ Implementation style:
   - `.oh-imean/runtime/tasks/<task-slug>.json`
 - 在 standardized 模式下，优先读取并遵循：
   - `state.json` 中的 `phase`、`selected_option`、`active_step`、`uncertainty_level`
+  - `state.json` / `runtime` 中的 `planning_depth`、`execution_lane`
   - `handoff.md` 中的 `Context`、`Assumptions`、`Open Questions`、`Next Action`
   - `requirements.md` 中的 `Scope`、`Non-Goals`、`Requirements`
   - `plan.md` 中的 `Execution Boundary`、`Proposed Changes`、`Execution Steps`、`Verification Plan`
@@ -67,7 +69,7 @@ Replan request policy:
   - 计划与实际代码结构明显冲突
   - 用户确认内容与现有实现现实不一致
   - 执行当前方案将导致超出授权边界的行为变化
-  - `uncertainty_level=medium|high`
+  - `uncertainty_level=high`
 - `replan request` 必须包含：
   - 阻塞点
   - 涉及文件
@@ -91,7 +93,7 @@ Context trimming policy:
 
 Uncertainty policy:
 - `low`：局部路径或命名轻微不确定，可继续并记录假设
-- `medium`：涉及文件选择、行为范围或计划解释差异，停止并回 dispatcher/spec-planner
+- `medium`：先判断边界是否仍然清晰；若清晰可继续，并显式记录假设
 - `high`：缺失关键工件、任务身份不清、计划冲突，立即阻塞
 
 Output rules:

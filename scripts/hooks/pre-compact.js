@@ -40,6 +40,8 @@ function main() {
     generated_at: new Date().toISOString(),
     hook_profile: getHookProfile(),
     mode: task ? task.state.mode || task.runtime?.mode || null : null,
+    execution_lane: task ? task.state.execution_lane || task.runtime?.execution_lane || null : null,
+    planning_depth: task ? task.state.planning_depth || task.runtime?.planning_depth || null : null,
     task_slug: task ? task.taskSlug : null,
     phase: task ? task.state.phase || null : null,
     verification_status: task ? task.state.verification_status || task.runtime?.verification_status || null : null,

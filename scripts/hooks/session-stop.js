@@ -113,6 +113,8 @@ function buildSessionSummary(task, facts, sessionId) {
     mode: mode || 'unknown',
     task_slug: task ? task.taskSlug : 'none',
     phase: state.phase || 'none',
+    execution_lane: state.execution_lane || task?.runtime?.execution_lane || 'unknown',
+    planning_depth: state.planning_depth || task?.runtime?.planning_depth || 'unknown',
     hook_profile: getHookProfile(),
     current_goal: goal,
     signals: facts.userGoals,
@@ -148,6 +150,8 @@ function main() {
     updateRuntimeTask(projectRoot, task.taskSlug, {
       mode: task.state.mode || 'standardized',
       phase: task.state.phase || null,
+      execution_lane: task.state.execution_lane || task.runtime?.execution_lane || null,
+      planning_depth: task.state.planning_depth || task.runtime?.planning_depth || null,
       selected_option: task.state.selected_option || null,
       active_step: task.state.active_step || null,
       verification_status: task.state.verification_status || task.runtime?.verification_status || null,

@@ -50,7 +50,30 @@ test('runtime recommends kickoff for quick-fix intake and verify for review comp
       phase: 'review',
     },
   };
+  const tddTask = {
+    taskSlug: 'plan-task',
+    state: {
+      mode: 'standardized',
+      phase: 'tdd',
+    },
+  };
 
   assert.equal(getRecommendedNextCommand(intakeTask), '/kickoff quick-task');
+  assert.equal(getRecommendedNextCommand(tddTask), '/tdd plan-task');
   assert.equal(getRecommendedNextCommand(reviewTask), '/review review-task');
+});
+
+test('runtime can resume a lite direct plan without forcing another planning round', () => {
+  const directPlanTask = {
+    taskSlug: 'lite-task',
+    state: {
+      mode: 'standardized',
+      phase: 'plan',
+      selected_option: 'Direct lane',
+      execution_lane: 'direct',
+      planning_depth: 'lite',
+    },
+  };
+
+  assert.equal(getRecommendedNextCommand(directPlanTask), '/kickoff lite-task Direct lane');
 });

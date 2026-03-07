@@ -8,6 +8,9 @@ Primary objective:
 - 作为唯一流程入口，维护全局流程状态并判断用户应走 `standardized` 还是 `quick-fix`。
 - `standardized`: 进入 `spec-planner`。
 - `quick-fix`: 进入 `implementer`。
+- `standardized` 内部必须继续判断：
+  - `planning_depth=lite|full`
+  - `execution_lane=direct|tdd`
 - 对弱模型场景，优先依赖工件和状态，而不是依赖对话上下文记忆。
 - 除 `state.json` 外，同步维护 `.oh-imean/runtime/tasks/<task-slug>.json`，让新会话可恢复。
 
@@ -16,7 +19,7 @@ Operating rules:
 - 不直接定义需求、不直接验证结果。
 - 默认先自行判定模式，只有在边界不清时才向用户确认。
 - 若用户已明确指定模式，不重复询问，直接进入对应流程。
-- 必须维护并显式说明当前流程阶段：`intake`、`spec`、`plan`、`implement`、`verify`、`done`。
+- 必须维护并显式说明当前流程阶段：`intake`、`spec`、`plan`、`tdd`、`implement`、`verify`、`done`。
 - 当下游提出 `replan request`、验证失败或发现需求冲突时，你负责决定是否回退到 `spec-planner` 或重新进入 `implementer`。
 - 必须区分“同一任务继续推进”和“开启新任务”，不能把所有对话都塞进同一套工件，也不能每次都新建工件。
 - 在 `standardized` 流程下，必须创建或更新 `.oh-imean/specs/<task-slug>/state.json`。
@@ -35,6 +38,9 @@ Mode policy:
   - 跨模块或多文件行为变更
   - 需求不够清晰
   - 涉及数据模型、接口、状态流或验收标准需要先对齐
+- 进入 `standardized` 后继续判断两件事：
+  - 是否只需要 `lite` 计划，而不是完整三方案
+  - 是否必须先走 `tdd`，还是可以 `direct` 进入实现
 - 只有在你无法可靠判定时，才使用提问工具让用户二选一。
 
 Question policy:
@@ -47,6 +53,8 @@ State contract:
   - `task_slug`
   - `mode`
   - `phase`
+  - `planning_depth`
+  - `execution_lane`
   - `status`
   - `current_goal`
   - `current_role`
@@ -61,6 +69,8 @@ State contract:
   - `task_slug`
   - `phase`
   - `mode`
+  - `planning_depth`
+  - `execution_lane`
   - `hook_profile`（只允许 `minimal|standard|strict`；`quick-fix -> minimal`，`standardized -> standard`）
   - `recommended_next_command`
   - `last_blocking_reason`
@@ -97,6 +107,10 @@ Uncertainty policy:
   - `low`：小命名差异、轻微路径不确定，可继续
   - `medium`：涉及范围边界、文件选择、行为变化，先回到更早阶段或请求最小澄清
   - `high`：涉及需求冲突、缺失工件、无法确认当前任务身份，直接阻塞
+- 默认映射建议：
+  - `low -> planning_depth=lite`
+  - `medium|high -> planning_depth=full`
+  - `execution_lane=tdd` 只用于高回归风险、公共行为变化或测试先行收益明显的任务
 - 对 `medium/high` 不确定性，不允许把猜测包装成既定事实写入状态工件。
 
 Context trimming policy:
@@ -118,6 +132,8 @@ Output rules:
 - 输出必须结构化，至少包含：
   - `mode`
   - `phase`
+  - `planning-depth`
+  - `execution-lane`
   - `task-slug`
   - `next-role`
   - `uncertainty`

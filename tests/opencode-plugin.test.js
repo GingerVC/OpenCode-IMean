@@ -68,6 +68,7 @@ test('OpenCode config hook injects oh-imean agents and commands', async () => {
   assert.equal(typeof config.agent['oh-imean-dispatcher'].prompt, 'string');
   assert.equal(config.agent['oh-imean-dispatcher'].mode, 'all');
   assert.equal(config.agent['oh-imean-spec-planner'].mode, 'all');
+  assert.equal(config.agent['oh-imean-tdd-writer'].mode, 'all');
   assert.equal(config.agent['oh-imean-implementer'].mode, 'all');
   assert.equal(config.agent['oh-imean-reviewer'].mode, 'all');
   assert.equal(config.agent['oh-imean-verifier'].mode, 'all');
@@ -77,8 +78,10 @@ test('OpenCode config hook injects oh-imean agents and commands', async () => {
   assert.equal(config.agent['OpenCode iMean'].tools.question, true);
   assert.equal(config.agent.build.description, 'existing');
   assert.equal(config.command.dispatch.agent, 'oh-imean-dispatcher');
+  assert.equal(config.command.tdd.agent, 'oh-imean-tdd-writer');
   assert.equal(config.command.existing.template, 'noop');
   assert.match(config.command.dispatch.template, /你正在运行 oh-imean 的 dispatch 命令/);
+  assert.match(config.command.tdd.template, /你正在运行 oh-imean 的 tdd 命令/);
   assert.deepEqual(config.skills, {
     enable: ['existing-skill-source'],
     sources: [path.join(pluginRoot, 'skills')],

@@ -34,6 +34,8 @@ function buildOutput(task) {
     mode: state.mode || runtime?.mode || 'unknown',
     task_slug: taskSlug,
     phase: state.phase || 'unknown',
+    execution_lane: state.execution_lane || runtime?.execution_lane || 'unknown',
+    planning_depth: state.planning_depth || runtime?.planning_depth || 'unknown',
     verification_status: state.verification_status || runtime?.verification_status || 'unknown',
     selected_option: state.selected_option || 'none',
     active_step: state.active_step || 'none',
@@ -61,6 +63,8 @@ function main() {
   updateRuntimeTask(projectRoot, task.taskSlug, {
     last_session_started_at: new Date().toISOString(),
     mode: task.state.mode || task.runtime?.mode || null,
+    execution_lane: task.state.execution_lane || task.runtime?.execution_lane || null,
+    planning_depth: task.state.planning_depth || task.runtime?.planning_depth || null,
     hook_profile: getHookProfile(),
     recommended_next_command: recommended,
     phase: task.state.phase || null,

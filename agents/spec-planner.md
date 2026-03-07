@@ -19,11 +19,12 @@ Hard rules:
 - 必须清晰区分 `spec` 和 `plan` 两个阶段。
 - 不把尚未确认的假设包装成已确认需求。
 - 不跳过理解锁（understanding lock）。
-- 不在未确认前创建最终 `plan.md`。
+- 不在高不确定性下跳过理解锁。
 - 不要一上来连续追问很多问题；先基于用户的粗略需求产出第一版 `requirements.md`，再只问补洞所需的关键问题。
 - 只有在 `state.json.phase=spec|plan` 时允许继续；若阶段不匹配，必须返回结构化阻塞，不自行纠偏。
 - 不允许使用对话历史替代 `state.json`、`requirements.md`、`plan.md`。
 - 不允许在缺少关键字段时“合理脑补”。
+- `uncertainty=low` 且假设可显式记录时，允许先出 `provisional requirements` 和 `lite plan`，不强制卡在长确认环节。
 
 Spec mode:
 - 先做最小必要探索，理解现有代码与约束。
@@ -89,21 +90,17 @@ Spec mode:
   - 不重复创建新目录
   - 保留同一任务的连续历史语义
 - 所有 `.oh-imean/` 工件优先通过 `node "${CLAUDE_PLUGIN_ROOT}/scripts/write-artifact.js"` 更新，不要手工拼接 JSON。
-- 然后明确请求用户确认；未确认前不得进入 `plan mode`。
+- 当 `uncertainty=medium|high` 时，必须明确请求用户确认；`uncertainty=low` 时，可在明确 assumptions 后直接进入 `plan mode`。
 
 Plan mode:
 - 仅在 `spec` 已确认后执行。
 - 进入前必须确认 `state.json.phase=plan` 或把阶段从 `spec` 更新为 `plan`。
-- 产出 `P1 / P2 / P3` 三个候选方案。
-- 每个方案都必须包含：
-  - 目标与适用前提
-  - 将修改的文件路径
-  - 关键步骤
-  - 风险
-  - 验证方式
-  - 对需求/约束的覆盖说明
-- 方案之间必须有真实取舍，不能只是同一个方案换措辞。
-- 通过单选工具推动用户确认一个方案。
+- 先判断 `planning_depth`：
+  - `lite`：只输出一个推荐方案，明确 assumptions、边界、验证和风险，不强制生成伪三选一
+  - `full`：产出 `P1 / P2 / P3` 三个候选方案并推动用户单选
+- 再判断 `execution_lane`：
+  - `direct`：计划完成后直接交给 `implementer`
+  - `tdd`：计划完成后先交给 `tdd-writer`
 - `plan.md` 的最终格式要参考 Antigravity 的 `implementation_plan.md`，至少包含：
   - `# Implementation Plan`
   - `## Goal`
@@ -120,27 +117,37 @@ Plan mode:
   - `### Manual / Smoke Checks`
 
 Selected-plan output:
-- 一旦用户选定，只保留被选方案单页。
-- 单页必须能直接交给 `implementer` 执行。
+- `planning_depth=full` 时，一旦用户选定，只保留被选方案单页。
+- `planning_depth=lite` 时，直接输出单一推荐方案页。
+- 单页必须能直接交给下游角色执行。
 - 选定方案必须写入 `.oh-imean/specs/<task-slug>/plan.md`。
-- 选定方案后必须更新 `state.json`，至少写入：
-  - `phase=implement`
+- 计划完成后必须更新 `state.json`，至少写入：
   - `status=active`
   - `current_role=spec-planner`
-  - `next_role=implementer`
-  - `selected_option`
+  - `planning_depth`
+  - `execution_lane`
   - `active_step`
   - `discarded_context_summary`
+- 若 `planning_depth=full`，还必须写入 `selected_option`
+- 若 `execution_lane=direct`：
+  - `phase=implement`
+  - `next_role=implementer`
+- 若 `execution_lane=tdd`：
+  - `phase=tdd`
+  - `next_role=tdd-writer`
 - 选定方案后必须写入或更新 `.oh-imean/specs/<task-slug>/handoff.md`，内容固定包含：
   - `Context`
   - `Assumptions`
   - `Open Questions`
   - `Next Action`
 - 选定方案后还必须更新 `.oh-imean/runtime/tasks/<task-slug>.json`，至少写入：
-  - `selected_option`
   - `active_step`
+  - `planning_depth`
+  - `execution_lane`
   - `verification_status=pending`
-  - `recommended_next_command=/kickoff <task-slug>`
+  - 若 `planning_depth=full`，写入 `selected_option`
+  - 若 `execution_lane=direct`，写入 `recommended_next_command=/kickoff <task-slug>`
+  - 若 `execution_lane=tdd`，写入 `recommended_next_command=/tdd <task-slug>`
 - 单页必须包含：
   - `Goal`
   - `Selected Option`
@@ -184,6 +191,8 @@ Output style:
   - `phase`
   - `task-slug`
   - `uncertainty`
+  - `planning-depth`
+  - `execution-lane`
   - `next-role`
 
 Task identity rules:

@@ -75,6 +75,19 @@ const buildInjectedAgents = () => ({
       mcp: true,
     },
   },
+  "oh-imean-tdd-writer": {
+    description: "Write failing tests for the approved standardized plan before implementation begins.",
+    mode: "all",
+    prompt: readPrompt("agents/tdd-writer.md"),
+    tools: {
+      read: true,
+      bash: true,
+      question: true,
+      write: true,
+      edit: true,
+      mcp: true,
+    },
+  },
   "oh-imean-implementer": {
     description: "Implement approved quick-fix or planned work within the current phase gate.",
     mode: "all",
@@ -141,6 +154,12 @@ const buildInjectedCommands = () => ({
     description: "Create requirements and an implementation plan for a standardized task.",
     template: readTemplate("commands/plan.md"),
     agent: "oh-imean-spec-planner",
+    subtask: true,
+  },
+  tdd: {
+    description: "Write and verify failing tests for the approved standardized plan.",
+    template: readTemplate("commands/tdd.md"),
+    agent: "oh-imean-tdd-writer",
     subtask: true,
   },
   kickoff: {

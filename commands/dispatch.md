@@ -19,14 +19,17 @@ $ARGUMENTS
 2. 若未明确说明，先由你基于任务复杂度和歧义程度自动判定默认模式：
    - `quick-fix`：单点修复、已有明确报错、低歧义、小范围改动
    - `standardized`：新功能、跨模块变更、需求不稳、需要先对齐验收标准
-3. 只有在你无法可靠判定时，才使用 `question` / `ask_user_question` / `askuserquestion` 之一询问用户选择模式。
-4. 若模式为 `standardized`：
+3. 若模式为 `standardized`，继续判断两件事：
+   - `planning_depth=lite|full`
+   - `execution_lane=direct|tdd`
+4. 只有在你无法可靠判定时，才使用 `question` / `ask_user_question` / `askuserquestion` 之一询问用户选择模式。
+5. 若模式为 `standardized`：
    - 先判断是复用已有 `task-slug` 还是创建新 `task-slug`。
    - 优先使用 artifact writer 创建或更新 `.oh-imean/specs/<task-slug>/state.json`。
    - 同步用 artifact writer 创建或更新 `.oh-imean/runtime/tasks/<task-slug>.json`。
    - 生成 state/runtime patch 时，优先使用 wrapper：
-     - `node "${CLAUDE_PLUGIN_ROOT}/scripts/build-template-meta.js" dispatch-state <task-slug> --mode standardized --phase intake --status active --current-role dispatcher --next-role spec-planner --uncertainty <low|medium|high> --goal "<需求摘要>" --recommended-next-command "/plan <task-slug>" --out <state-patch>`
-     - `node "${CLAUDE_PLUGIN_ROOT}/scripts/build-template-meta.js" dispatch-runtime <task-slug> --phase intake --hook-profile <profile> --recommended-next-command "/plan <task-slug>" --last-blocking-reason "<none|reason>" --out <runtime-patch>`
+     - `node "${CLAUDE_PLUGIN_ROOT}/scripts/build-template-meta.js" dispatch-state <task-slug> --mode standardized --phase intake --status active --current-role dispatcher --next-role spec-planner --planning-depth <lite|full> --execution-lane <direct|tdd> --uncertainty <low|medium|high> --goal "<需求摘要>" --recommended-next-command "/plan <task-slug>" --out <state-patch>`
+     - `node "${CLAUDE_PLUGIN_ROOT}/scripts/build-template-meta.js" dispatch-runtime <task-slug> --phase intake --planning-depth <lite|full> --execution-lane <direct|tdd> --hook-profile <profile> --recommended-next-command "/plan <task-slug>" --last-blocking-reason "<none|reason>" --out <runtime-patch>`
    - 可选地预创建 `handoff.md` 模板，给后续 `/plan` 直接复用。
    - 生成 handoff 的 `meta-file` 时，优先使用 wrapper：
      - `node "${CLAUDE_PLUGIN_ROOT}/scripts/build-template-meta.js" dispatch-handoff <task-slug> --phase intake --from-role dispatcher --to-role spec-planner --next-action "运行 /plan <task-slug>" --out <meta-file>`
@@ -34,18 +37,18 @@ $ARGUMENTS
      - `node "${CLAUDE_PLUGIN_ROOT}/scripts/write-artifact.js" state <task-slug> --merge-file <state-patch>`
      - `node "${CLAUDE_PLUGIN_ROOT}/scripts/write-artifact.js" runtime <task-slug> --merge-file <runtime-patch>`
      - `node "${CLAUDE_PLUGIN_ROOT}/scripts/write-artifact.js" handoff <task-slug> --template --meta-file <meta-file>`
-   - `state.json` 至少写入：`mode=standardized`、`phase=intake`、`status=active`、`current_role=dispatcher`、`next_role=spec-planner`、`uncertainty_level`。
-   - `runtime/tasks/<task-slug>.json` 至少写入：`task_slug`、`phase=intake`、`hook_profile=standard`（或用户明确指定的 `strict`）、`recommended_next_command`、`last_blocking_reason`。
+   - `state.json` 至少写入：`mode=standardized`、`phase=intake`、`status=active`、`current_role=dispatcher`、`next_role=spec-planner`、`planning_depth`、`execution_lane`、`uncertainty_level`。
+   - `runtime/tasks/<task-slug>.json` 至少写入：`task_slug`、`phase=intake`、`planning_depth`、`execution_lane`、`hook_profile=standard`（或用户明确指定的 `strict`）、`recommended_next_command`、`last_blocking_reason`。
    - 不进入代码实现。
    - 明确引导进入 `/plan <需求>` 或 `/resume <task-slug>`。
-5. 若模式为 `quick-fix`：
+6. 若模式为 `quick-fix`：
    - 也必须创建或复用 `task-slug`，并写入 `.oh-imean/specs/<task-slug>/state.json`、`.oh-imean/specs/<task-slug>/handoff.md` 与 `.oh-imean/runtime/tasks/<task-slug>.json`。
    - state patch 至少包含：`mode=quick-fix`、`phase=implement`、`status=active`、`current_role=dispatcher`、`next_role=implementer`、`current_goal`、`uncertainty_level`、`recommended_next_command=/kickoff <task-slug>`。
    - runtime patch 至少包含：`mode=quick-fix`、`phase=implement`、`hook_profile=minimal`、`recommended_next_command=/kickoff <task-slug>`、`last_blocking_reason`。
    - handoff 只保留当前修复目标、假设、未决问题、下一步。
    - 不在当前命令里直接实施修改。
    - 明确引导进入 `/kickoff <task-slug>`。
-6. 采用 `Read -> Judge -> Keep/Drop`：
+7. 采用 `Read -> Judge -> Keep/Drop`：
    - 允许有限探索帮助判模
    - 只把路由结论、理由、下一角色、任务标识写入状态工件与 runtime task
    - 无关探索结果不要带到下一阶段

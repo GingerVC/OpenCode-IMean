@@ -241,3 +241,51 @@ test('build-template-meta writes verify state patch with last_verified_at and di
   assert.equal(content.last_verified_at, '2026-03-06T12:00:00.000Z');
   assert.equal(content.discarded_context_summary, '丢弃无关日志，仅保留验证证据');
 });
+
+test('build-template-meta writes tdd state/runtime patches', () => {
+  const projectRoot = createTempProject();
+  const statePath = path.join(projectRoot, 'tdd-state.json');
+  const runtimePath = path.join(projectRoot, 'tdd-runtime.json');
+
+  const stateResult = runNode([
+    'tdd-state',
+    'demo-task',
+    '--phase', 'tdd',
+    '--status', 'active',
+    '--current-role', 'tdd-writer',
+    '--next-role', 'implementer',
+    '--execution-lane', 'tdd',
+    '--planning-depth', 'full',
+    '--selected-option', 'P2 - 平衡方案',
+    '--active-step', '先写锁定状态失败测试',
+    '--recommended-next-command', '/tdd demo-task',
+    '--out', statePath,
+  ], { cwd: projectRoot });
+  assert.equal(stateResult.status, 0, stateResult.stderr);
+
+  const runtimeResult = runNode([
+    'tdd-runtime',
+    'demo-task',
+    '--phase', 'tdd',
+    '--execution-lane', 'tdd',
+    '--planning-depth', 'full',
+    '--selected-option', 'P2 - 平衡方案',
+    '--active-step', '先写锁定状态失败测试',
+    '--recommended-next-command', '/tdd demo-task',
+    '--out', runtimePath,
+  ], { cwd: projectRoot });
+  assert.equal(runtimeResult.status, 0, runtimeResult.stderr);
+
+  const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
+  const runtime = JSON.parse(fs.readFileSync(runtimePath, 'utf8'));
+
+  assert.equal(state.phase, 'tdd');
+  assert.equal(state.current_role, 'tdd-writer');
+  assert.equal(state.next_role, 'implementer');
+  assert.equal(state.execution_lane, 'tdd');
+  assert.equal(state.planning_depth, 'full');
+  assert.equal(runtime.phase, 'tdd');
+  assert.equal(runtime.execution_lane, 'tdd');
+  assert.equal(runtime.planning_depth, 'full');
+  assert.equal(runtime.recommended_next_command, '/tdd demo-task');
+});

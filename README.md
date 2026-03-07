@@ -27,7 +27,7 @@ In practice, that means the plugin tries to stop common failure modes of weaker 
 
 ## Core Design
 
-- `standardized` flow: `dispatch -> plan -> kickoff -> review -> verify`
+- `standardized` flow: `dispatch -> plan -> (kickoff | tdd -> kickoff) -> review -> verify`
 - `quick-fix` flow: `dispatch -> kickoff -> review -> verify`
 - state is written to artifacts instead of relying on chat memory
 - the workflow can resume from artifacts in a new session
@@ -56,9 +56,17 @@ Flow:
 
 - `/dispatch <goal>`
 - `/plan <goal-or-task-slug>`
-- `/kickoff <task-slug>`
+- low-risk lane: `/kickoff <task-slug>`
+- high-risk lane: `/tdd <task-slug>` -> `/kickoff <task-slug>`
 - `/review <task-slug>`
 - `/verify <task-slug>`
+
+Adaptive rules:
+
+- `planning_depth=lite`: use one recommended plan when the requirement is credible and bounded
+- `planning_depth=full`: use heavier planning when scope or trade-offs are still unclear
+- `execution_lane=direct`: skip TDD when the change is narrow and regression risk is low
+- `execution_lane=tdd`: require failing tests first when the change affects public behavior or carries real regression risk
 
 ### Quick-fix
 
@@ -77,6 +85,7 @@ Internal workflow roles:
 
 - `oh-imean:dispatcher`: routes work and advances or rolls back phase
 - `oh-imean:spec-planner`: locks requirements and writes the plan
+- `oh-imean:tdd-writer`: writes failing tests before implementation begins
 - `oh-imean:implementer`: executes only the approved step
 - `oh-imean:reviewer`: performs review before verification
 - `oh-imean:verifier`: validates outcomes and writes final verification state

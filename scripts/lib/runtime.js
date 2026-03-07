@@ -224,8 +224,17 @@ function getRecommendedNextCommand(task) {
         ? `/kickoff ${taskSlug}`
         : `/plan ${taskSlug}`;
     case 'spec':
-    case 'plan':
       return `/plan ${taskSlug}`;
+    case 'plan':
+      if (state.selected_option && state.execution_lane === 'tdd') {
+        return `/tdd ${taskSlug}`;
+      }
+      if (state.selected_option && state.execution_lane === 'direct') {
+        return `/kickoff ${taskSlug}${option}`.trim();
+      }
+      return `/plan ${taskSlug}`;
+    case 'tdd':
+      return `/tdd ${taskSlug}`;
     case 'implement':
       return `/kickoff ${taskSlug}${option}`.trim();
     case 'review':
