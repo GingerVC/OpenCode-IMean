@@ -75,8 +75,8 @@ function readJsonFile(filePath) {
 function buildDispatchHandoff(options) {
   return {
     phase: options.values.phase || 'intake',
-    from_role: options.values['from-role'] || 'dispatcher',
-    to_role: options.values['to-role'] || 'spec-planner',
+    from_role: options.values['from-role'] || 'OpenCode IMean',
+    to_role: options.values['to-role'] || 'OpenCode IMean',
     context: options.values.context || '',
     assumptions: options.lists.assumption || [],
     open_questions: options.lists['open-question'] || [],
@@ -122,8 +122,8 @@ function buildPlanImplementation(options) {
 function buildPlanHandoff(options) {
   return {
     phase: options.values.phase || 'tdd',
-    from_role: options.values['from-role'] || 'spec-planner',
-    to_role: options.values['to-role'] || 'tdd-writer',
+    from_role: options.values['from-role'] || 'OpenCode IMean',
+    to_role: options.values['to-role'] || 'OpenCode IMean',
     context: options.values.context || '',
     assumptions: options.lists.assumption || [],
     open_questions: options.lists['open-question'] || [],
@@ -134,8 +134,8 @@ function buildPlanHandoff(options) {
 function buildTddHandoff(options) {
   return {
     phase: options.values.phase || 'implement',
-    from_role: options.values['from-role'] || 'tdd-writer',
-    to_role: options.values['to-role'] || 'implementer',
+    from_role: options.values['from-role'] || 'OpenCode IMean',
+    to_role: options.values['to-role'] || 'OpenCode IMean',
     context: options.values.context || '',
     assumptions: options.lists.assumption || [],
     open_questions: options.lists['open-question'] || [],
@@ -146,8 +146,8 @@ function buildTddHandoff(options) {
 function buildKickoffHandoff(options) {
   return {
     phase: options.values.phase || 'verify',
-    from_role: options.values['from-role'] || 'implementer',
-    to_role: options.values['to-role'] || 'verifier',
+    from_role: options.values['from-role'] || 'OpenCode IMean',
+    to_role: options.values['to-role'] || 'OpenCode IMean',
     context: options.values.context || '',
     assumptions: options.lists.assumption || [],
     open_questions: options.lists['open-question'] || [],

@@ -1,6 +1,6 @@
 ---
-description: 对标准化任务或局部改动执行独立验证，并落盘验证工件。
-agent: oh-imean:verifier
+description: 单角色对标准化任务或局部改动执行最终验证，并落盘验证工件。
+agent: "OpenCode IMean"
 model: openai/gpt-5.2
 argument-hint: 可传 task-slug；留空则验证最近活跃 standardized 任务
 ---
@@ -26,7 +26,7 @@ $ARGUMENTS
    - `verification.md`
 7. artifact writer 用法：
    - state/runtime patch 优先先生成 `patch-file`：
-    - `node "${CLAUDE_PLUGIN_ROOT}/scripts/build-template-meta.js" verify-state <task-slug> --phase done --status <active|blocked|done> --current-role verifier --next-role <dispatcher|none> --verification-status <pass|fail|pass_with_risk> --last-blocking-reason "<reason>" --recommended-next-command "<command>" --last-verified-at "<iso-time>" --discarded-context-summary "<summary>" --out <state-patch>`
+    - `node "${CLAUDE_PLUGIN_ROOT}/scripts/build-template-meta.js" verify-state <task-slug> --phase done --status <active|blocked|done> --current-role OpenCode IMean --next-role <OpenCode IMean|none> --verification-status <pass|fail|pass_with_risk> --last-blocking-reason "<reason>" --recommended-next-command "<command>" --last-verified-at "<iso-time>" --discarded-context-summary "<summary>" --out <state-patch>`
      - `node "${CLAUDE_PLUGIN_ROOT}/scripts/build-template-meta.js" verify-runtime <task-slug> --phase verify --verification-status <pass|fail|pass_with_risk> --selected-option "<P1|P2|P3>" --active-step "<step>" --last-blocking-reason "<reason>" --recommended-next-command "<command>" --out <runtime-patch>`
    - JSON 工件：
      - `node "${CLAUDE_PLUGIN_ROOT}/scripts/write-artifact.js" state <task-slug> --merge-file <state-patch>`

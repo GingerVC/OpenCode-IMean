@@ -1,4 +1,5 @@
 import fs from "node:fs"
+import os from "node:os"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 
@@ -6,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const pluginRoot = path.resolve(__dirname, "../..")
 const CLAUDE_PLUGIN_ROOT_VAR = "${CLAUDE_PLUGIN_ROOT}"
-const SKILLS_SOURCE_PATH = path.join(pluginRoot, "skills")
+const PLUGIN_SKILLS_SOURCE_PATH = path.join(pluginRoot, "skills")
 const RUNTIME_TASKS_DIR = ".oh-imean/runtime/tasks"
 const SPECS_DIR = ".oh-imean/specs"
 
@@ -18,6 +19,8 @@ const TOOL_NAME_MAP = {
 
 const FILE_ARG_KEYS = ["filePath", "file_path", "path"]
 const FRONTMATTER_PATTERN = /^---\n[\s\S]*?\n---\n?/
+const RESEARCH_MCPS = ["websearch", "context7"]
+const PRIMARY_AGENT_NAME = "OpenCode IMean"
 
 const readText = (relativePath) =>
   fs.readFileSync(path.join(pluginRoot, relativePath), "utf8")
@@ -48,202 +51,117 @@ const resolvePluginPaths = (value) => {
   return value
 }
 
-const buildInjectedAgents = () => ({
-  "oh-imean-dispatcher": {
-    description: "Route work into standardized or quick-fix workflow phases.",
-    mode: "all",
-    prompt: readPrompt("agents/dispatcher.md"),
-    tools: {
-      read: true,
-      bash: true,
-      question: true,
-      write: false,
-      edit: false,
-      mcp: true,
-    },
-  },
-  "oh-imean-spec-planner": {
-    description: "Lock requirements and produce an implementation plan for standardized workflow tasks.",
-    mode: "all",
-    prompt: readPrompt("agents/spec-planner.md"),
-    tools: {
-      read: true,
-      bash: true,
-      question: true,
-      write: true,
-      edit: true,
-      mcp: true,
-    },
-  },
-  "oh-imean-tdd-writer": {
-    description: "Write failing tests for the approved standardized plan before implementation begins.",
-    mode: "all",
-    prompt: readPrompt("agents/tdd-writer.md"),
-    tools: {
-      read: true,
-      bash: true,
-      question: true,
-      write: true,
-      edit: true,
-      mcp: true,
-    },
-  },
-  "oh-imean-implementer": {
-    description: "Implement approved quick-fix or planned work within the current phase gate.",
-    mode: "all",
-    prompt: readPrompt("agents/implementer.md"),
-    tools: {
-      read: true,
-      bash: true,
-      question: true,
-      write: true,
-      edit: true,
-      mcp: true,
-    },
-  },
-  "oh-imean-reviewer": {
-    description: "Review completed implementation for regressions, quality, and missing coverage.",
-    mode: "all",
-    prompt: readPrompt("agents/reviewer.md"),
-    tools: {
-      read: true,
-      bash: true,
-      write: true,
-      edit: false,
-      mcp: true,
-    },
-  },
-  "oh-imean-verifier": {
-    description: "Verify implementation against requirements, tests, and quality gates.",
-    mode: "all",
-    prompt: readPrompt("agents/verifier.md"),
-    tools: {
-      read: true,
-      bash: true,
-      write: true,
-      edit: false,
-      mcp: true,
-    },
-  },
-})
-
-const buildPrimaryAgents = () => ({
-  "OpenCode iMean": {
-    description: "Primary orchestration role that routes work through the oh-imean workflow.",
-    mode: "primary",
-    prompt: readPrompt("agents/dispatcher.md"),
-    tools: {
-      read: true,
-      bash: true,
-      question: true,
-      write: true,
-      edit: true,
-      mcp: true,
-    },
-  },
-})
-
-const buildInjectedCommands = () => ({
-  dispatch: {
-    description: "Route a new task into standardized or quick-fix mode.",
-    template: readTemplate("commands/dispatch.md"),
-    agent: "oh-imean-dispatcher",
-    subtask: true,
-  },
-  plan: {
-    description: "Create requirements and an implementation plan for a standardized task.",
-    template: readTemplate("commands/plan.md"),
-    agent: "oh-imean-spec-planner",
-    subtask: true,
-  },
-  tdd: {
-    description: "Write and verify failing tests for the approved standardized plan.",
-    template: readTemplate("commands/tdd.md"),
-    agent: "oh-imean-tdd-writer",
-    subtask: true,
-  },
-  kickoff: {
-    description: "Execute the implementation phase for the current task.",
-    template: readTemplate("commands/kickoff.md"),
-    agent: "oh-imean-implementer",
-    subtask: true,
-  },
-  review: {
-    description: "Review implementation results before verification.",
-    template: readTemplate("commands/review.md"),
-    agent: "oh-imean-reviewer",
-    subtask: true,
-  },
-  verify: {
-    description: "Run final verification and write verification artifacts.",
-    template: readTemplate("commands/verify.md"),
-    agent: "oh-imean-verifier",
-    subtask: true,
-  },
-  resume: {
-    description: "Resume the latest active task and show the next recommended command.",
-    template: readTemplate("commands/resume.md"),
-    agent: "oh-imean-dispatcher",
-    subtask: true,
-  },
-  status: {
-    description: "Summarize task state, review status, verification status, and blockers.",
-    template: readTemplate("commands/status.md"),
-    agent: "oh-imean-dispatcher",
-    subtask: true,
-  },
-  "quality-gate": {
-    description: "Run the lightweight quality gate on a file or repo scope.",
-    template: readTemplate("commands/quality-gate.md"),
-    agent: "oh-imean-verifier",
-    subtask: true,
-  },
-})
-
-const getLatestTaskPhase = () => {
+const pathExists = (targetPath) => {
   try {
-    const specsRoot = path.join(process.cwd(), SPECS_DIR)
-    if (!fs.existsSync(specsRoot)) return null
+    return fs.existsSync(targetPath)
+  } catch {
+    return false
+  }
+}
 
-    const taskDirs = fs
-      .readdirSync(specsRoot, { withFileTypes: true })
-      .filter((entry) => entry.isDirectory())
-      .map((entry) => entry.name)
+const isDirectory = (targetPath) => {
+  try {
+    return fs.statSync(targetPath).isDirectory()
+  } catch {
+    return false
+  }
+}
 
-    let latestTask = null
-    let latestTime = 0
+const uniquePaths = (paths) => [...new Set(paths.filter(Boolean))]
 
-    for (const taskSlug of taskDirs) {
-      const statePath = path.join(specsRoot, taskSlug, "state.json")
-      if (fs.existsSync(statePath)) {
-        const stat = fs.statSync(statePath)
-        if (stat.mtimeMs > latestTime) {
-          latestTime = stat.mtimeMs
-          const state = JSON.parse(fs.readFileSync(statePath, "utf8"))
-          latestTask = state
-        }
-      }
+const getOpenCodeConfigDir = () => {
+  const envConfigDir = process.env.OPENCODE_CONFIG_DIR?.trim()
+  if (envConfigDir) {
+    return path.resolve(envConfigDir)
+  }
+
+  if (process.platform === "win32") {
+    const crossPlatformDir = path.join(os.homedir(), ".config", "opencode")
+    const crossPlatformConfig = path.join(crossPlatformDir, "opencode.json")
+
+    if (pathExists(crossPlatformConfig)) {
+      return crossPlatformDir
     }
 
-    if (!latestTask) return null
-    if (["done"].includes(latestTask.phase)) return null
-    if (["active", "waiting_user", "blocked"].includes(latestTask.status)) {
-      return latestTask.phase
+    const appData = process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming")
+    const appDataDir = path.join(appData, "opencode")
+    const appDataConfig = path.join(appDataDir, "opencode.json")
+
+    if (pathExists(appDataConfig)) {
+      return appDataDir
     }
+
+    return crossPlatformDir
+  }
+
+  const xdgConfig = process.env.XDG_CONFIG_HOME || path.join(os.homedir(), ".config")
+  return path.join(xdgConfig, "opencode")
+}
+
+const getOpenCodeProjectSkillsDir = () => path.join(process.cwd(), ".opencode", "skills")
+const getOpenCodeGlobalSkillsDir = () => path.join(getOpenCodeConfigDir(), "skills")
+
+const getManagedSkillSourcesLowToHigh = () => uniquePaths([
+  PLUGIN_SKILLS_SOURCE_PATH,
+  getOpenCodeGlobalSkillsDir(),
+  getOpenCodeProjectSkillsDir(),
+].filter(isDirectory))
+
+const getManagedSkillSourcesHighToLow = () => [...getManagedSkillSourcesLowToHigh()].reverse()
+
+const readJsonFile = (filePath) => {
+  if (!pathExists(filePath)) {
     return null
+  }
+
+  try {
+    return JSON.parse(fs.readFileSync(filePath, "utf8"))
   } catch {
     return null
   }
 }
 
-const buildInjectedMcpServers = () => {
-  const rawConfig = JSON.parse(readText(".mcp.json"))
-  const rawServers = rawConfig?.mcpServers
-  const currentPhase = getLatestTaskPhase()
+const extractMcpServers = (value) => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {}
+  }
 
-  // Define research-heavy MCPs that should be disabled during pure implementation
-  const RESEARCH_MCPS = ["websearch", "context7"]
+  if (value.mcpServers && typeof value.mcpServers === "object" && !Array.isArray(value.mcpServers)) {
+    return value.mcpServers
+  }
 
+  const looksLikeDirectMcpMap = Object.values(value).some((entry) => (
+    entry && typeof entry === "object" && !Array.isArray(entry) && (
+      "command" in entry || "url" in entry || "type" in entry
+    )
+  ))
+
+  return looksLikeDirectMcpMap ? value : {}
+}
+
+const loadMcpServersFromFile = (filePath) => resolvePluginPaths(extractMcpServers(readJsonFile(filePath)))
+
+const listSkillDirectories = (skillSource) => {
+  if (!isDirectory(skillSource)) return []
+
+  return fs.readdirSync(skillSource, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => path.join(skillSource, entry.name))
+}
+
+const loadSkillScopedMcpServers = (skillSources) => {
+  const servers = {}
+
+  for (const skillSource of skillSources) {
+    for (const skillDir of listSkillDirectories(skillSource)) {
+      Object.assign(servers, loadMcpServersFromFile(path.join(skillDir, "mcp.json")))
+    }
+  }
+
+  return servers
+}
+
+const normalizeMcpServers = (rawServers, currentPhase) => {
   if (!rawServers || typeof rawServers !== "object") {
     return {}
   }
@@ -258,7 +176,6 @@ const buildInjectedMcpServers = () => {
       const serverType = server.type || "stdio"
       let enabled = server.disabled !== true
 
-      // Disable research tools if we are actively implementing code
       if (enabled && RESEARCH_MCPS.includes(name) && currentPhase === "implement") {
         enabled = false
       }
@@ -300,40 +217,163 @@ const buildInjectedMcpServers = () => {
   )
 }
 
+const buildPrimaryAgents = () => ({
+  [PRIMARY_AGENT_NAME]: {
+    description: "Single fixed workflow agent for oh-imean.",
+    mode: "primary",
+    prompt: readPrompt("agents/workflow.md"),
+    tools: {
+      read: true,
+      bash: true,
+      question: true,
+      write: true,
+      edit: true,
+      mcp: true,
+    },
+  },
+})
+
+const buildInjectedCommands = () => ({
+  dispatch: {
+    description: "Initialize a new task and enter spec.",
+    template: readTemplate("commands/dispatch.md"),
+    agent: PRIMARY_AGENT_NAME,
+    subtask: true,
+  },
+  plan: {
+    description: "Lock spec, write the implementation plan, then advance to tdd.",
+    template: readTemplate("commands/plan.md"),
+    agent: PRIMARY_AGENT_NAME,
+    subtask: true,
+  },
+  tdd: {
+    description: "Write failing tests before implementation.",
+    template: readTemplate("commands/tdd.md"),
+    agent: PRIMARY_AGENT_NAME,
+    subtask: true,
+  },
+  kickoff: {
+    description: "Implement after tdd is complete.",
+    template: readTemplate("commands/kickoff.md"),
+    agent: PRIMARY_AGENT_NAME,
+    subtask: true,
+  },
+  review: {
+    description: "Review implementation results before verification.",
+    template: readTemplate("commands/review.md"),
+    agent: PRIMARY_AGENT_NAME,
+    subtask: true,
+  },
+  verify: {
+    description: "Run final verification and write verification artifacts.",
+    template: readTemplate("commands/verify.md"),
+    agent: PRIMARY_AGENT_NAME,
+    subtask: true,
+  },
+  resume: {
+    description: "Resume the latest active task and show the next recommended command.",
+    template: readTemplate("commands/resume.md"),
+    agent: PRIMARY_AGENT_NAME,
+    subtask: true,
+  },
+  status: {
+    description: "Summarize task state, review status, verification status, and blockers.",
+    template: readTemplate("commands/status.md"),
+    agent: PRIMARY_AGENT_NAME,
+    subtask: true,
+  },
+  "quality-gate": {
+    description: "Run the lightweight quality gate on a file or repo scope.",
+    template: readTemplate("commands/quality-gate.md"),
+    agent: PRIMARY_AGENT_NAME,
+    subtask: true,
+  },
+})
+
+const getLatestTaskPhase = () => {
+  try {
+    const specsRoot = path.join(process.cwd(), SPECS_DIR)
+    if (!fs.existsSync(specsRoot)) return null
+
+    const taskDirs = fs
+      .readdirSync(specsRoot, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name)
+
+    let latestTask = null
+    let latestTime = 0
+
+    for (const taskSlug of taskDirs) {
+      const statePath = path.join(specsRoot, taskSlug, "state.json")
+      if (fs.existsSync(statePath)) {
+        const stat = fs.statSync(statePath)
+        if (stat.mtimeMs > latestTime) {
+          latestTime = stat.mtimeMs
+          const state = JSON.parse(fs.readFileSync(statePath, "utf8"))
+          latestTask = state
+        }
+      }
+    }
+
+    if (!latestTask) return null
+    if (["done"].includes(latestTask.phase)) return null
+    if (["active", "waiting_user", "blocked"].includes(latestTask.status)) {
+      return latestTask.phase
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
+const buildInjectedMcpServers = () => {
+  const currentPhase = getLatestTaskPhase()
+  const rawServers = {
+    ...loadMcpServersFromFile(path.join(pluginRoot, ".mcp.json")),
+    ...loadMcpServersFromFile(path.join(process.cwd(), ".mcp.json")),
+    ...loadMcpServersFromFile(path.join(process.cwd(), ".claude", ".mcp.json")),
+    ...loadSkillScopedMcpServers(getManagedSkillSourcesLowToHigh()),
+  }
+
+  return normalizeMcpServers(rawServers, currentPhase)
+}
+
+const toSourcePath = (source) => {
+  if (typeof source === "string") return source
+  if (source && typeof source === "object" && typeof source.path === "string") return source.path
+  return null
+}
+
 const mergeSkillSources = (existingSkills) => {
+  const managedSources = getManagedSkillSourcesHighToLow()
+
   if (!existingSkills) {
     return {
-      sources: [SKILLS_SOURCE_PATH],
+      sources: managedSources,
     }
   }
 
   if (Array.isArray(existingSkills)) {
     return {
       enable: existingSkills,
-      sources: [SKILLS_SOURCE_PATH],
+      sources: managedSources,
     }
   }
 
   const existingSources = Array.isArray(existingSkills.sources) ? existingSkills.sources : []
-  const hasSource = existingSources.some((source) =>
-    source === SKILLS_SOURCE_PATH || source?.path === SKILLS_SOURCE_PATH,
-  )
-
-  if (hasSource) {
-    return existingSkills
-  }
+  const existingSourcePaths = new Set(existingSources.map(toSourcePath).filter(Boolean))
+  const missingSources = managedSources.filter((source) => !existingSourcePaths.has(source))
 
   return {
     ...existingSkills,
-    sources: [...existingSources, SKILLS_SOURCE_PATH],
+    sources: [...existingSources, ...missingSources],
   }
 }
 
 export const applyOhIMeanConfig = (config) => {
   config.agent = {
     ...(config.agent || {}),
-    ...buildInjectedAgents(),
-    ...buildPrimaryAgents(),
+        ...buildPrimaryAgents(),
   }
 
   config.command = {

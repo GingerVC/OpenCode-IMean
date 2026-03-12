@@ -1,6 +1,6 @@
 ---
 description: 汇总当前任务的 phase、最近验证状态与 replan 风险。
-agent: oh-imean:dispatcher
+agent: "OpenCode IMean"
 model: openai/gpt-5.2
 argument-hint: 可选传入 task-slug；留空则读取最近活跃任务
 ---

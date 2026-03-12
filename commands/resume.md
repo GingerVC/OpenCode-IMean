@@ -1,6 +1,6 @@
 ---
 description: 恢复最近一次活跃任务，并给出下一步命令。
-agent: oh-imean:dispatcher
+agent: "OpenCode IMean"
 model: openai/gpt-5.2
 argument-hint: 可选传入 task-slug；留空则恢复最近活跃任务
 ---

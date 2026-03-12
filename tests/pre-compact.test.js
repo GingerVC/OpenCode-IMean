@@ -18,40 +18,29 @@ function writeJson(filePath, value) {
   fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
 }
 
-test('pre-compact snapshot keeps selected option and active step', () => {
+test('pre-compact snapshot keeps active step and blocker summary', () => {
   const projectRoot = createTempProject();
-
   writeJson(path.join(projectRoot, '.oh-imean', 'specs', 'demo-task', 'state.json'), {
     task_slug: 'demo-task',
     mode: 'standardized',
     phase: 'implement',
-    execution_lane: 'direct',
-    planning_depth: 'lite',
     status: 'active',
-    selected_option: 'P1 - 稳妥最小改动',
     active_step: '更新登录前置校验',
-    last_blocking_reason: '等待 reviewer 结论',
-    recommended_next_command: '/kickoff demo-task P1',
+    last_blocking_reason: '等待 review 结论',
+    recommended_next_command: '/kickoff demo-task',
   });
-
   const result = spawnSync(process.execPath, [SCRIPT_PATH], {
     cwd: projectRoot,
     input: JSON.stringify({ session_id: 'compact-demo' }),
     encoding: 'utf8',
     env: process.env,
   });
-
   assert.equal(result.status, 0, result.stderr);
-
   const logsDir = path.join(projectRoot, '.oh-imean', 'runtime', 'logs');
   const snapshotFile = fs.readdirSync(logsDir).find(name => name.startsWith('pre-compact-'));
   assert.ok(snapshotFile);
-
   const snapshot = JSON.parse(fs.readFileSync(path.join(logsDir, snapshotFile), 'utf8'));
   assert.equal(snapshot.mode, 'standardized');
-  assert.equal(snapshot.execution_lane, 'direct');
-  assert.equal(snapshot.planning_depth, 'lite');
-  assert.equal(snapshot.selected_option, 'P1 - 稳妥最小改动');
   assert.equal(snapshot.active_step, '更新登录前置校验');
-  assert.equal(snapshot.last_blocking_reason, '等待 reviewer 结论');
+  assert.equal(snapshot.last_blocking_reason, '等待 review 结论');
 });

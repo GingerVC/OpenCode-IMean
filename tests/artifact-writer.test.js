@@ -239,8 +239,8 @@ test('artifact writer supports JSON merge patch from file', () => {
     mode: 'standardized',
     phase: 'implement',
     status: 'active',
-    current_role: 'implementer',
-    next_role: 'verifier',
+    current_role: 'OpenCode IMean',
+    next_role: 'OpenCode IMean',
   }), 'utf8');
 
   const result = runNode(
@@ -253,6 +253,6 @@ test('artifact writer supports JSON merge patch from file', () => {
   const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
 
   assert.equal(state.phase, 'implement');
-  assert.equal(state.current_role, 'implementer');
-  assert.equal(state.next_role, 'verifier');
+  assert.equal(state.current_role, 'OpenCode IMean');
+  assert.equal(state.next_role, 'OpenCode IMean');
 });

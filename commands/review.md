@@ -1,6 +1,6 @@
 ---
-description: 对已实现改动做独立审查，重点关注需求一致性、回归风险和测试缺口。
-agent: oh-imean:reviewer
+description: 单角色对已实现改动做独立审查，重点关注需求一致性、回归风险和测试缺口。
+agent: "OpenCode IMean"
 model: openai/gpt-5.2
 argument-hint: 可传 task-slug、变更范围或 review 目标
 ---
@@ -26,10 +26,10 @@ $ARGUMENTS
 5. 不改代码，不伪装成最终验证结论，不替代 `/verify`。
 6. 审查结果必须写入 `.oh-imean/specs/<task-slug>/review.md`。
 7. 若 review 通过：
-   - 更新 `state.json` 为 `phase=verify`、`current_role=reviewer`、`next_role=verifier`
+   - 更新 `state.json` 为 `phase=verify`、`current_role=OpenCode IMean`、`next_role=OpenCode IMean`
    - 更新 `runtime/tasks/<task-slug>.json`，`recommended_next_command=/verify <task-slug>`
 8. 若 review 阻断：
-   - 更新 `state.json` 为 `phase=implement`、`current_role=reviewer`、`next_role=implementer`
+   - 更新 `state.json` 为 `phase=implement`、`current_role=OpenCode IMean`、`next_role=OpenCode IMean`
    - 更新 `runtime/tasks/<task-slug>.json`，`recommended_next_command=/kickoff <task-slug>`
 9. 优先使用：
    - `node "${CLAUDE_PLUGIN_ROOT}/scripts/build-template-meta.js" review-report <task-slug> ... --out <review-meta>`

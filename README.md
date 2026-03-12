@@ -1,14 +1,14 @@
-# OpenCode iMean
+# OpenCode IMean
 
 [中文说明](./README.zh-CN.md)
 
-OpenCode iMean is a local-first workflow plugin for OpenCode, `oh-my-opencode`, and Claude Code compatible loaders.
+OpenCode IMean is a local-first workflow plugin for OpenCode, `oh-my-opencode`, and Claude Code compatible loaders.
 
-`OpenCode iMean` is not an official OpenCode project. It is a community-maintained workflow plugin. The internal slug remains `oh-imean` for compatibility with existing commands, artifact paths, and hook scripts.
+`OpenCode IMean` is not an official OpenCode project. It is a community-maintained workflow plugin. The internal slug remains `oh-imean` for compatibility with existing commands, artifact paths, and hook scripts.
 
 ## What It Is For
 
-OpenCode iMean is designed for low-cost, large-context models that can read a lot but still drift off-task.
+OpenCode IMean is designed for low-cost, large-context models that can read a lot but still drift off-task.
 
 The core idea is not "give the model more context." The core idea is:
 
@@ -27,8 +27,7 @@ In practice, that means the plugin tries to stop common failure modes of weaker 
 
 ## Core Design
 
-- `standardized` flow: `dispatch -> plan -> (kickoff | tdd -> kickoff) -> review -> verify`
-- `quick-fix` flow: `dispatch -> kickoff -> review -> verify`
+- fixed flow: `dispatch -> spec -> plan -> tdd -> kickoff -> review -> verify`
 - state is written to artifacts instead of relying on chat memory
 - the workflow can resume from artifacts in a new session
 - hooks enforce phase gates and lightweight quality checks
@@ -38,7 +37,7 @@ In practice, that means the plugin tries to stop common failure modes of weaker 
 - `.claude-plugin/plugin.json`: Claude-compatible plugin manifest
 - `.opencode/opencode.json`: native OpenCode entrypoint
 - `.opencode/plugins/`: native OpenCode plugin wrapper
-- `agents/`: role prompts
+- `agents/`: single workflow prompt
 - `commands/`: slash command prompts
 - `hooks/`: hook mapping
 - `scripts/lib/`: shared runtime helpers
@@ -61,39 +60,22 @@ Flow:
 - `/review <task-slug>`
 - `/verify <task-slug>`
 
-Adaptive rules:
+Fixed rule:
 
-- `planning_depth=lite`: use one recommended plan when the requirement is credible and bounded
-- `planning_depth=full`: use heavier planning when scope or trade-offs are still unclear
-- `execution_lane=direct`: skip TDD when the change is narrow and regression risk is low
-- `execution_lane=tdd`: require failing tests first when the change affects public behavior or carries real regression risk
-
-### Quick-fix
-
-Use this for narrow bug fixes or low-ambiguity changes.
-
-Flow:
-
-- `/dispatch <goal>`
-- `/kickoff <task-slug>`
-- `/review <task-slug>`
-- `/verify <task-slug>`
+- every task enters `spec`, then `plan`, then `tdd` before implementation
 
 ## Roles
 
-Internal workflow roles:
+Single visible role:
 
-- `oh-imean:dispatcher`: routes work and advances or rolls back phase
-- `oh-imean:spec-planner`: locks requirements and writes the plan
-- `oh-imean:tdd-writer`: writes failing tests before implementation begins
-- `oh-imean:implementer`: executes only the approved step
-- `oh-imean:reviewer`: performs review before verification
-- `oh-imean:verifier`: validates outcomes and writes final verification state
+- `OpenCode IMean`: the only role exposed by the plugin
+- `spec`, `plan`, `tdd`, `implement`, `review`, and `verify`: workflow phases inside `OpenCode IMean`, not separate roles
 
-Native OpenCode exposure:
+Notes:
 
-- `OpenCode iMean`: the single `primary` role shown in the OpenCode role switcher
-- internal roles remain available for workflow commands and internal delegation
+- slash commands still split the work by phase, but every command runs on `OpenCode IMean`
+- `handoff.md` now represents a phase checkpoint inside `OpenCode IMean`, not role delegation
+- managed `skills` and merged `mcp` config are attached to `OpenCode IMean` through the plugin `config` hook
 
 ## Why This Helps Drift-Prone Models
 
@@ -141,7 +123,7 @@ Notes:
 - `.oh-imean/` is runtime-generated and is not tracked in git
 - `state.json` is the workflow truth source
 - `runtime/tasks/*.json` is the recovery summary layer
-- `handoff.md` is the role-to-role transition layer
+- `handoff.md` is the phase-transition checkpoint layer
 
 ## Hook Behavior
 
@@ -160,7 +142,7 @@ Hook profiles:
 
 Recommended defaults:
 
-- `quick-fix -> minimal`
+- fixed workflow default: `standard`
 - `standardized -> standard`
 
 Environment variables:
@@ -181,11 +163,11 @@ Current checked-in skills:
 - `playwright`
 - `repo-guard`
 
-The native OpenCode wrapper does not auto-inject `skills/` into `config.skills`. If you want them in native OpenCode, wire them in explicitly from your own project setup or use a compatible loader that already understands this directory.
+The native OpenCode wrapper now auto-injects three skill scopes into `config.skills`: project `.opencode/skills`, global `~/.config/opencode/skills`, and this plugin's own `skills/`. Existing `config.skills` entries are preserved and kept ahead of the managed sources. All managed skills are then available to `OpenCode IMean` because every injected command runs on that one role.
 
 ## MCP Setup
 
-Bundled MCP definitions are optional. `.mcp.json` is a template/reference file, not an auto-loaded registry.
+Bundled MCP definitions are auto-merged into the wrapper config. `oh-imean` now combines the plugin `.mcp.json`, project `.mcp.json`, project `.claude/.mcp.json`, and any `mcp.json` files found inside managed skill directories. The merged MCP set is exposed to `OpenCode IMean` as the single workflow role.
 
 Current entries:
 
@@ -219,8 +201,8 @@ OpenCode loads:
 - `.opencode/opencode.json`
 - `.opencode/plugins/oh-imean.js`
 - plugin-injected commands
-- one primary role: `OpenCode iMean`
-- internal workflow subagents
+- one primary role: `OpenCode IMean`
+- plugin-injected phase commands that all target `OpenCode IMean`
 
 ### Reuse from another project
 

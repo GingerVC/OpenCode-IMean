@@ -12,7 +12,7 @@ Apply these defaults while working:
 - For paused standardized tasks, prefer `/resume` or `/status` before re-entering `/plan` or `/kickoff`.
 - Keep `state.json`, `handoff.md`, and `runtime/tasks/<task-slug>.json` aligned when a phase changes.
 - Run targeted verification for touched code before claiming completion.
-- Use `/quality-gate` for fast file-scope checks; use verifier for the formal requirement coverage decision.
+- Use `/quality-gate` for fast file-scope checks; use `/verify` for the formal requirement coverage decision.
 - When tests or checks are skipped, state that clearly and explain why.
 - Before completion, declare verification status explicitly (what was run, what was not run).
 - Keep outputs concise and actionable.

@@ -20,60 +20,29 @@ function writeJson(filePath, value) {
   fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
 }
 
-test('runtime prefers active quick-fix task and recommends review command', () => {
+test('runtime prefers active standardized task and recommends review command', () => {
   const projectRoot = createTempProject();
-
-  writeJson(path.join(projectRoot, '.oh-imean', 'specs', 'quick-task', 'state.json'), {
-    task_slug: 'quick-task',
-    mode: 'quick-fix',
+  writeJson(path.join(projectRoot, '.oh-imean', 'specs', 'demo-task', 'state.json'), {
+    task_slug: 'demo-task',
+    mode: 'standardized',
     phase: 'review',
     status: 'active',
   });
-
   const task = getLatestTask(projectRoot);
-  assert.equal(task.taskSlug, 'quick-task');
-  assert.equal(getRecommendedNextCommand(task), '/review quick-task');
+  assert.equal(task.taskSlug, 'demo-task');
+  assert.equal(getRecommendedNextCommand(task), '/review demo-task');
 });
 
-test('runtime recommends kickoff for quick-fix intake and verify for review completion chain', () => {
-  const intakeTask = {
-    taskSlug: 'quick-task',
-    state: {
-      mode: 'quick-fix',
-      phase: 'intake',
-    },
-  };
-  const reviewTask = {
-    taskSlug: 'review-task',
-    state: {
-      mode: 'standardized',
-      phase: 'review',
-    },
-  };
-  const tddTask = {
-    taskSlug: 'plan-task',
-    state: {
-      mode: 'standardized',
-      phase: 'tdd',
-    },
-  };
-
-  assert.equal(getRecommendedNextCommand(intakeTask), '/kickoff quick-task');
-  assert.equal(getRecommendedNextCommand(tddTask), '/tdd plan-task');
-  assert.equal(getRecommendedNextCommand(reviewTask), '/review review-task');
+test('runtime recommends plan for spec and tdd after planning', () => {
+  const specTask = { taskSlug: 'demo-task', state: { mode: 'standardized', phase: 'spec' } };
+  const planTask = { taskSlug: 'demo-task', state: { mode: 'standardized', phase: 'plan' } };
+  const tddTask = { taskSlug: 'demo-task', state: { mode: 'standardized', phase: 'tdd' } };
+  assert.equal(getRecommendedNextCommand(specTask), '/plan demo-task');
+  assert.equal(getRecommendedNextCommand(planTask), '/tdd demo-task');
+  assert.equal(getRecommendedNextCommand(tddTask), '/tdd demo-task');
 });
 
-test('runtime can resume a lite direct plan without forcing another planning round', () => {
-  const directPlanTask = {
-    taskSlug: 'lite-task',
-    state: {
-      mode: 'standardized',
-      phase: 'plan',
-      selected_option: 'Direct lane',
-      execution_lane: 'direct',
-      planning_depth: 'lite',
-    },
-  };
-
-  assert.equal(getRecommendedNextCommand(directPlanTask), '/kickoff lite-task Direct lane');
+test('runtime only recommends kickoff after implement phase', () => {
+  const implementTask = { taskSlug: 'demo-task', state: { mode: 'standardized', phase: 'implement' } };
+  assert.equal(getRecommendedNextCommand(implementTask), '/kickoff demo-task');
 });

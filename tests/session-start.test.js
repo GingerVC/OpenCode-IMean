@@ -20,76 +20,53 @@ function writeJson(filePath, value) {
 
 test('session start renders structured resume output', () => {
   const projectRoot = createTempProject();
-
   writeJson(path.join(projectRoot, '.oh-imean', 'specs', 'demo-task', 'state.json'), {
     task_slug: 'demo-task',
     mode: 'standardized',
     phase: 'verify',
-    execution_lane: 'direct',
-    planning_depth: 'lite',
     status: 'active',
-    selected_option: 'P2 - 平衡方案',
     active_step: '执行最终验证',
     recommended_next_command: '/verify demo-task',
   });
-
   const sessionPath = path.join(projectRoot, '.oh-imean', 'runtime', 'sessions', '2026-03-06-demo.md');
   fs.mkdirSync(path.dirname(sessionPath), { recursive: true });
   fs.writeFileSync(sessionPath, '# Session Summary\n\n## Current Goal\n修复登录限流\n', 'utf8');
-
   writeJson(path.join(projectRoot, '.oh-imean', 'runtime', 'tasks', 'demo-task.json'), {
     task_slug: 'demo-task',
     last_session_path: '.oh-imean/runtime/sessions/2026-03-06-demo.md',
     verification_status: 'pending',
   });
-
-  const result = spawnSync(process.execPath, [SCRIPT_PATH], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-    env: process.env,
-  });
-
+  const result = spawnSync(process.execPath, [SCRIPT_PATH], { cwd: projectRoot, encoding: 'utf8', env: process.env });
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /## Context/);
   assert.match(result.stdout, /## Latest Session Summary/);
   assert.match(result.stdout, /- mode: standardized/);
-  assert.match(result.stdout, /- execution_lane: direct/);
-  assert.match(result.stdout, /- planning_depth: lite/);
-  assert.match(result.stdout, /P2 - 平衡方案/);
+  assert.match(result.stdout, /- phase: verify/);
   assert.match(result.stdout, /\/verify demo-task/);
 });
 
-test('session start restores quick-fix review task and shows recent review summary', () => {
+test('session start restores standardized review task and shows recent review summary', () => {
   const projectRoot = createTempProject();
-
   writeJson(path.join(projectRoot, '.oh-imean', 'specs', 'demo-task', 'state.json'), {
     task_slug: 'demo-task',
-    mode: 'quick-fix',
+    mode: 'standardized',
     phase: 'review',
     status: 'active',
     active_step: '独立审查实现结果',
     recommended_next_command: '/review demo-task',
   });
-
   const reviewPath = path.join(projectRoot, '.oh-imean', 'specs', 'demo-task', 'review.md');
   fs.mkdirSync(path.dirname(reviewPath), { recursive: true });
   fs.writeFileSync(reviewPath, '# Review Report\n\n## Findings\n- 无发现\n', 'utf8');
-
   writeJson(path.join(projectRoot, '.oh-imean', 'runtime', 'tasks', 'demo-task.json'), {
     task_slug: 'demo-task',
     review_status: 'pass',
     verification_status: 'pending',
     last_review_summary: '无发现',
   });
-
-  const result = spawnSync(process.execPath, [SCRIPT_PATH], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-    env: process.env,
-  });
-
+  const result = spawnSync(process.execPath, [SCRIPT_PATH], { cwd: projectRoot, encoding: 'utf8', env: process.env });
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /- mode: quick-fix/);
+  assert.match(result.stdout, /- mode: standardized/);
   assert.match(result.stdout, /- phase: review/);
   assert.match(result.stdout, /- recommended_next_command: \/review demo-task/);
   assert.match(result.stdout, /无发现/);

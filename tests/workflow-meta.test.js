@@ -29,8 +29,8 @@ test('build-template-meta writes dispatch handoff meta file with semantic flags'
     'dispatch-handoff',
     'demo-task',
     '--phase', 'intake',
-    '--from-role', 'dispatcher',
-    '--to-role', 'spec-planner',
+    '--from-role', 'OpenCode IMean',
+    '--to-role', 'OpenCode IMean',
     '--next-action', '运行 /plan demo-task',
     '--assumption', '需求范围尚未锁定',
     '--out', outPath,
@@ -40,8 +40,8 @@ test('build-template-meta writes dispatch handoff meta file with semantic flags'
 
   const content = JSON.parse(fs.readFileSync(outPath, 'utf8'));
   assert.equal(content.phase, 'intake');
-  assert.equal(content.from_role, 'dispatcher');
-  assert.equal(content.to_role, 'spec-planner');
+  assert.equal(content.from_role, 'OpenCode IMean');
+  assert.equal(content.to_role, 'OpenCode IMean');
   assert.equal(content.next_action, '运行 /plan demo-task');
   assert.deepEqual(content.assumptions, ['需求范围尚未锁定']);
 });
@@ -108,8 +108,8 @@ test('build-template-meta writes dispatch state patch with required workflow fie
     '--mode', 'standardized',
     '--phase', 'intake',
     '--status', 'active',
-    '--current-role', 'dispatcher',
-    '--next-role', 'spec-planner',
+    '--current-role', 'OpenCode IMean',
+    '--next-role', 'OpenCode IMean',
     '--uncertainty', 'medium',
     '--goal', '给登录接口增加限流能力',
     '--recommended-next-command', '/plan demo-task',
@@ -121,8 +121,8 @@ test('build-template-meta writes dispatch state patch with required workflow fie
   const content = JSON.parse(fs.readFileSync(outPath, 'utf8'));
   assert.equal(content.mode, 'standardized');
   assert.equal(content.phase, 'intake');
-  assert.equal(content.current_role, 'dispatcher');
-  assert.equal(content.next_role, 'spec-planner');
+  assert.equal(content.current_role, 'OpenCode IMean');
+  assert.equal(content.next_role, 'OpenCode IMean');
   assert.equal(content.uncertainty_level, 'medium');
   assert.equal(content.current_goal, '给登录接口增加限流能力');
 });
@@ -163,8 +163,8 @@ test('build-template-meta writes review state/runtime patches', () => {
     'demo-task',
     '--phase', 'review',
     '--status', 'blocked',
-    '--current-role', 'reviewer',
-    '--next-role', 'implementer',
+    '--current-role', 'OpenCode IMean',
+    '--next-role', 'OpenCode IMean',
     '--verification-status', 'pending',
     '--last-blocking-reason', '缺少锁定状态测试',
     '--recommended-next-command', '/kickoff demo-task',
@@ -189,8 +189,8 @@ test('build-template-meta writes review state/runtime patches', () => {
   const runtime = JSON.parse(fs.readFileSync(runtimePath, 'utf8'));
 
   assert.equal(state.phase, 'review');
-  assert.equal(state.current_role, 'reviewer');
-  assert.equal(state.next_role, 'implementer');
+  assert.equal(state.current_role, 'OpenCode IMean');
+  assert.equal(state.next_role, 'OpenCode IMean');
   assert.equal(runtime.phase, 'review');
   assert.equal(runtime.recommended_next_command, '/review demo-task');
 });
@@ -252,8 +252,8 @@ test('build-template-meta writes tdd state/runtime patches', () => {
     'demo-task',
     '--phase', 'tdd',
     '--status', 'active',
-    '--current-role', 'tdd-writer',
-    '--next-role', 'implementer',
+    '--current-role', 'OpenCode IMean',
+    '--next-role', 'OpenCode IMean',
     '--execution-lane', 'tdd',
     '--planning-depth', 'full',
     '--selected-option', 'P2 - 平衡方案',
@@ -280,8 +280,8 @@ test('build-template-meta writes tdd state/runtime patches', () => {
   const runtime = JSON.parse(fs.readFileSync(runtimePath, 'utf8'));
 
   assert.equal(state.phase, 'tdd');
-  assert.equal(state.current_role, 'tdd-writer');
-  assert.equal(state.next_role, 'implementer');
+  assert.equal(state.current_role, 'OpenCode IMean');
+  assert.equal(state.next_role, 'OpenCode IMean');
   assert.equal(state.execution_lane, 'tdd');
   assert.equal(state.planning_depth, 'full');
   assert.equal(runtime.phase, 'tdd');

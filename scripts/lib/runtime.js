@@ -190,23 +190,8 @@ function getLatestTask(projectRoot) {
   return tasks.find(task => isActiveState(task.state)) || tasks[0] || null;
 }
 
-function detectModeFromGoal(text) {
-  const source = String(text || '').toLowerCase();
-  if (!source) return 'standardized';
-
-  const quickFixSignals = [
-    'bug',
-    'fix',
-    '报错',
-    '修复',
-    '错误',
-    '异常',
-    'hotfix',
-  ];
-
-  return quickFixSignals.some(signal => source.includes(signal))
-    ? 'quick-fix'
-    : 'standardized';
+function detectModeFromGoal() {
+  return 'standardized';
 }
 
 function getRecommendedNextCommand(task) {
@@ -216,33 +201,23 @@ function getRecommendedNextCommand(task) {
 
   const state = task.state;
   const taskSlug = task.taskSlug;
-  const option = state.selected_option ? ` ${state.selected_option}` : '';
 
   switch (state.phase) {
     case 'intake':
-      return state.mode === 'quick-fix'
-        ? `/kickoff ${taskSlug}`
-        : `/plan ${taskSlug}`;
     case 'spec':
       return `/plan ${taskSlug}`;
     case 'plan':
-      if (state.selected_option && state.execution_lane === 'tdd') {
-        return `/tdd ${taskSlug}`;
-      }
-      if (state.selected_option && state.execution_lane === 'direct') {
-        return `/kickoff ${taskSlug}${option}`.trim();
-      }
-      return `/plan ${taskSlug}`;
+      return `/tdd ${taskSlug}`;
     case 'tdd':
       return `/tdd ${taskSlug}`;
     case 'implement':
-      return `/kickoff ${taskSlug}${option}`.trim();
+      return `/kickoff ${taskSlug}`;
     case 'review':
       return `/review ${taskSlug}`;
     case 'verify':
       return `/verify ${taskSlug}`;
     case 'done':
-      return `/dispatch <新需求>`;
+      return '/dispatch <新需求>';
     default:
       return '/dispatch <需求>';
   }
