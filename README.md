@@ -1,5 +1,95 @@
 # OpenCode IMean
 
+## One-line install
+
+Install OpenCode IMean with a single command:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/vc999999999/OpenCode-IMean/main/scripts/install.sh | bash
+```
+
+This installer will:
+
+* install OpenCode IMean locally
+* register the plugin for OpenCode
+* register the plugin for oh-my-opencode / Claude compatible loaders when available
+* preserve existing user config whenever possible
+
+## Installation
+
+### Recommended (one-line installer)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/vc999999999/OpenCode-IMean/main/scripts/install.sh | bash
+```
+
+After installation run:
+
+```
+opencode
+```
+
+### For LLM agents
+
+Paste this into your LLM session:
+
+```
+Install and configure OpenCode IMean by following the instructions here:
+https://raw.githubusercontent.com/vc999999999/OpenCode-IMean/main/docs/guide/installation.md
+```
+
+### Manual installation
+
+Clone this repository and register the plugin path in your `opencode.json`:
+
+```json
+{
+  "plugin": [
+    "/path/to/OpenCode-IMean/.opencode/plugins"
+  ]
+}
+```
+
+### Claude / oh-my-opencode manual registration
+
+Add this repository to:
+
+```
+~/.claude/plugins/installed_plugins.json
+```
+
+with `installPath` pointing to the repository root.
+
+Then enable it in:
+
+```
+~/.claude/settings.json
+```
+
+## Quick Start
+
+Typical workflow:
+
+```
+/dispatch <goal>
+
+/plan <goal-or-task-slug>
+
+/tdd <task-slug>
+
+/kickoff <task-slug>
+
+/review <task-slug>
+
+/verify <task-slug>
+```
+
+Recommended order:
+
+```
+dispatch -> plan -> tdd -> kickoff -> review -> verify
+```
+
 [中文说明](./README.zh-CN.md)
 
 OpenCode IMean is a local-first workflow plugin for OpenCode, `oh-my-opencode`, and Claude Code compatible loaders.
@@ -55,8 +145,8 @@ Flow:
 
 - `/dispatch <goal>`
 - `/plan <goal-or-task-slug>`
-- low-risk lane: `/kickoff <task-slug>`
-- high-risk lane: `/tdd <task-slug>` -> `/kickoff <task-slug>`
+- `/tdd <task-slug>`
+- `/kickoff <task-slug>`
 - `/review <task-slug>`
 - `/verify <task-slug>`
 
@@ -76,27 +166,6 @@ Notes:
 - slash commands still split the work by phase, but every command runs on `OpenCode IMean`
 - `handoff.md` now represents a phase checkpoint inside `OpenCode IMean`, not role delegation
 - managed `skills` and merged `mcp` config are attached to `OpenCode IMean` through the plugin `config` hook
-
-## Why This Helps Drift-Prone Models
-
-The plugin is intentionally opinionated about task state.
-
-Instead of trusting the model to remember everything correctly, it writes the minimum durable context needed for the next step:
-
-- current phase
-- current task identity
-- selected option
-- active execution step
-- next role
-- next recommended command
-- latest review and verification status
-
-It also enforces a trim policy:
-
-- `Read -> Judge -> Keep/Drop`
-- `Explore locally, persist minimally`
-
-That is the main optimization target: reduce phase drift, not maximize raw context volume.
 
 ## Task Artifacts
 
@@ -192,7 +261,7 @@ Security rules:
 ### Use directly in this repository
 
 ```bash
-cd /Users/vcbb/Documents/代码/vcbb666/program/oh-imean
+cd /path/to/OpenCode-IMean
 opencode
 ```
 
@@ -211,7 +280,7 @@ Add this to your `opencode.json`:
 ```json
 {
   "plugin": [
-    "/Users/vcbb/Documents/代码/vcbb666/program/oh-imean/.opencode/plugins"
+    "/path/to/OpenCode-IMean/.opencode/plugins"
   ]
 }
 ```
@@ -220,7 +289,11 @@ Notes:
 
 - commands and roles are injected by the plugin `config` hook
 - you do not need to copy `agent` or `command` blocks by hand
-- the npm package path is not published yet; local directory usage is the supported path today
+
+OpenCode IMean currently uses a repository-based installer.
+
+A packaged registry distribution may be added later,
+but installation today works directly from the repository.
 
 ## Claude / oh-my-opencode Registration
 
@@ -228,15 +301,36 @@ Notes:
 
 - `~/.claude/plugins/installed_plugins.json`
 
-Add an entry whose `installPath` points at this directory:
-
-- `/Users/vcbb/Documents/代码/vcbb666/program/oh-imean`
+Add an entry whose `installPath` points at the repository root.
 
 Then enable the plugin in:
 
 - `~/.claude/settings.json`
 
 ## Notes
+
+### Why This Helps Drift-Prone Models
+
+The plugin is intentionally opinionated about task state.
+
+Instead of trusting the model to remember everything correctly, it writes the minimum durable context needed for the next step:
+
+- current phase
+- current task identity
+- selected option
+- active execution step
+- next role
+- next recommended command
+- latest review and verification status
+
+It also enforces a trim policy:
+
+- `Read -> Judge -> Keep/Drop`
+- `Explore locally, persist minimally`
+
+That is the main optimization target: reduce phase drift, not maximize raw context volume.
+
+### Additional Notes
 
 - default workflow language is Chinese
 - native OpenCode support lives under `.opencode/`
