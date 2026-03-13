@@ -5,7 +5,7 @@
 Install OpenCode IMean with a single command:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/vc999999999/OpenCode-IMean/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/GingerVC/OpenCode-IMean/main/scripts/install.sh | bash
 ```
 
 This installer will:
@@ -15,12 +15,19 @@ This installer will:
 * register the plugin for oh-my-opencode / Claude compatible loaders when available
 * preserve existing user config whenever possible
 
+## Prerequisites
+
+- `git`: required by the installer to clone or update the repository
+- `node`: required by the installer to merge config safely and run the plugin hooks
+- `opencode`: recommended. If it is installed, you can launch immediately after setup. If it is missing, the installer still writes config, but you must install OpenCode separately before running `opencode`
+- `~/.claude`: optional. If present, the installer also registers the plugin for Claude-compatible loaders
+
 ## Installation
 
 ### Recommended (one-line installer)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/vc999999999/OpenCode-IMean/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/GingerVC/OpenCode-IMean/main/scripts/install.sh | bash
 ```
 
 After installation run:
@@ -29,13 +36,39 @@ After installation run:
 opencode
 ```
 
+### Verify installation
+
+```bash
+command -v opencode >/dev/null 2>&1 && opencode --version || echo "opencode is not installed yet"
+node -e 'const fs=require("node:fs");const os=require("node:os");const path=require("node:path");const configPath=process.env.OPENCODE_CONFIG_DIR?path.join(process.env.OPENCODE_CONFIG_DIR,"opencode.json"):path.join(process.env.XDG_CONFIG_HOME||path.join(os.homedir(),".config"),"opencode","opencode.json");const content=fs.readFileSync(configPath,"utf8");if(!content.includes("OpenCode-IMean/.opencode/plugins")){throw new Error("OpenCode IMean plugin not found in "+configPath)}console.log("OpenCode IMean registered in",configPath)'
+```
+
 ### For LLM agents
 
 Paste this into your LLM session:
 
 ```
 Install and configure OpenCode IMean by following the instructions here:
-https://raw.githubusercontent.com/vc999999999/OpenCode-IMean/main/docs/guide/installation.md
+https://raw.githubusercontent.com/GingerVC/OpenCode-IMean/main/docs/guide/installation.md
+```
+
+### Standard LLM prompt
+
+Use this when you want an agent to perform the setup end-to-end instead of only summarizing it:
+
+```text
+Install OpenCode IMean for me by following this guide exactly:
+https://raw.githubusercontent.com/GingerVC/OpenCode-IMean/main/docs/guide/installation.md
+
+Use the repository installer, preserve my existing config, verify the plugin is registered for OpenCode, and if ~/.claude exists, register it there too.
+```
+
+### Installer flags
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/GingerVC/OpenCode-IMean/main/scripts/install.sh | bash -s -- --help
+curl -fsSL https://raw.githubusercontent.com/GingerVC/OpenCode-IMean/main/scripts/install.sh | bash -s -- --dry-run
+curl -fsSL https://raw.githubusercontent.com/GingerVC/OpenCode-IMean/main/scripts/install.sh | bash -s -- --uninstall
 ```
 
 ### Manual installation
@@ -65,6 +98,13 @@ Then enable it in:
 ```
 ~/.claude/settings.json
 ```
+
+### Failure scenarios
+
+- If `git` is missing, the installer stops immediately. Install Git first, then rerun the command.
+- If `node` is missing, the installer stops immediately. Install Node.js first, then rerun the command.
+- If `opencode` is missing, the installer still writes config, but you must install OpenCode from [opencode.ai/docs](https://opencode.ai/docs) before launching the plugin.
+- If `~/.claude` is missing, Claude-compatible registration is skipped. OpenCode registration still succeeds.
 
 ## Quick Start
 
